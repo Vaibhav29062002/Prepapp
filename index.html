@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d1320">
+<title>CGL Sprint · Tier-1 2026</title>
+<style>
+  :root{
+    --bg:#0b111d; --bg2:#0f1726; --surface:#151f31; --surface2:#1b273c;
+    --line:#26334c; --line2:#33456a;
+    --ink:#eef3fb; --muted:#93a3be; --faint:#63728e;
+    --go:#2fd4a7;            /* focus / action */
+    --urgent:#f5a524;        /* timer urgency */
+    --reasoning:#8b7cf6; --quant:#f5a524; --english:#38c777; --ga:#f2617a;
+    --mock:#4ea3ff; --review:#c4b1ff;
+    --danger:#ff6363;
+    --radius:16px; --radius-s:11px;
+    --fmono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --f:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--f); background:var(--bg); color:var(--ink);
+    -webkit-font-smoothing:antialiased; line-height:1.45;
+    padding-bottom:calc(72px + env(safe-area-inset-bottom));
+    max-width:560px; margin:0 auto; min-height:100vh;
+    background-image:radial-gradient(1200px 400px at 100% -10%, #12203a 0%, transparent 60%);
+  }
+  h1,h2,h3{margin:0;font-weight:750;letter-spacing:-0.02em}
+  .wrap{padding:16px 15px 24px}
+  .hidden{display:none!important}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  .btn{background:var(--go);color:#04241c;font-weight:750;border-radius:12px;padding:12px 16px;font-size:15px;width:100%;transition:transform .08s ease, filter .15s}
+  .btn:active{transform:scale(.98)}
+  .btn.ghost{background:var(--surface2);color:var(--ink);border:1px solid var(--line)}
+  .btn.small{width:auto;padding:9px 13px;font-size:13px;border-radius:10px}
+  .btn.urgent{background:var(--urgent);color:#3a2600}
+  .btn.danger{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+  input,select{font-family:inherit;font-size:15px;color:var(--ink);background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;width:100%}
+  input:focus,select:focus{outline:none;border-color:var(--go)}
+  label.fld{display:block;margin:11px 0 5px;font-size:12.5px;color:var(--muted);font-weight:600;letter-spacing:.01em}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:13px}
+  .row{display:flex;align-items:center;gap:10px}
+  .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:700}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.02em}
+
+  /* ---- top bar ---- */
+  .topbar{position:sticky;top:0;z-index:20;background:linear-gradient(#0b111dee,#0b111dcc);backdrop-filter:blur(10px);
+    padding:calc(env(safe-area-inset-top) + 12px) 15px 12px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:baseline;justify-content:space-between}
+  .brand .mark{font-weight:800;letter-spacing:-.03em;font-size:17px}
+  .brand .mark b{color:var(--go)}
+  .countdown{font-family:var(--fmono);font-size:12px;color:var(--muted)}
+  .countdown b{color:var(--urgent);font-size:15px}
+
+  /* ---- bottom nav ---- */
+  nav.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:30;max-width:560px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(5,1fr);
+    background:#0c1421f2;backdrop-filter:blur(14px);border-top:1px solid var(--line);
+    padding:8px 6px calc(8px + env(safe-area-inset-bottom))}
+  nav.tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--faint);font-size:10.5px;font-weight:650;padding:4px 2px;border-radius:10px}
+  nav.tabbar button .ic{font-size:19px;line-height:1}
+  nav.tabbar button.on{color:var(--go)}
+
+  /* ---- hero countdown ---- */
+  .hero{background:linear-gradient(150deg,#16233c,#111a2b);border:1px solid var(--line2);border-radius:var(--radius);padding:18px;margin-bottom:14px;position:relative;overflow:hidden}
+  .hero:after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,#f5a52433,transparent 70%)}
+  .hero .big{font-family:var(--fmono);font-size:46px;font-weight:700;letter-spacing:-.03em;line-height:1;color:var(--ink)}
+  .hero .big small{font-size:15px;color:var(--muted);font-weight:600;letter-spacing:0}
+  .hero .sub{color:var(--muted);font-size:13px;margin-top:6px}
+  .streak{display:inline-flex;align-items:center;gap:6px;background:#0e1626;border:1px solid var(--line);border-radius:20px;padding:5px 11px;font-size:12.5px;font-weight:700;margin-top:12px}
+
+  /* ---- task item ---- */
+  .task{display:flex;gap:11px;align-items:flex-start;padding:12px 4px;border-bottom:1px solid var(--line)}
+  .task:last-child{border-bottom:none}
+  .check{flex:0 0 auto;width:24px;height:24px;border-radius:8px;border:2px solid var(--line2);margin-top:1px;position:relative;transition:.12s}
+  .task.done .check{background:var(--go);border-color:var(--go)}
+  .task.done .check:after{content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#04241c;font-weight:900;font-size:14px}
+  .task .body{flex:1;min-width:0}
+  .task .ttl{font-size:14.5px;font-weight:600}
+  .task.done .ttl{color:var(--faint);text-decoration:line-through}
+  .task .meta{display:flex;gap:8px;align-items:center;margin-top:4px;flex-wrap:wrap}
+  .task .mins{font-size:11.5px;color:var(--faint);font-family:var(--fmono)}
+  .sbar{width:4px;align-self:stretch;border-radius:3px;flex:0 0 auto}
+  .carried{font-size:10px;color:var(--urgent);border:1px solid #f5a52455;border-radius:5px;padding:1px 5px;font-weight:700}
+
+  .sec-reasoning{--c:var(--reasoning)} .sec-quant{--c:var(--quant)}
+  .sec-english{--c:var(--english)} .sec-ga{--c:var(--ga)}
+  .sec-mock{--c:var(--mock)} .sec-review{--c:var(--review)} .sec-revision{--c:var(--go)}
+  .task .sbar{background:var(--c)} .chip.sec{background:color-mix(in srgb,var(--c) 20%,transparent);color:var(--c)}
+
+  .progressline{height:7px;background:var(--bg2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+  .progressline i{display:block;height:100%;background:linear-gradient(90deg,var(--go),#7ce0c6);border-radius:6px;transition:width .4s}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stat{background:var(--surface2);border:1px solid var(--line);border-radius:var(--radius-s);padding:12px}
+  .stat .n{font-size:22px;font-weight:800;font-family:var(--fmono);letter-spacing:-.02em}
+  .stat .l{font-size:11px;color:var(--muted);margin-top:2px}
+
+  /* ---- drill ring ---- */
+  .ring-wrap{display:flex;flex-direction:column;align-items:center;padding:8px 0}
+  .ring{position:relative;width:230px;height:230px}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .time{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .time .t{font-family:var(--fmono);font-size:48px;font-weight:700;letter-spacing:-.02em}
+  .ring .time .lab{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:700}
+  .segbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:6px 0 14px}
+  .segbtns button{border:1px solid var(--line);background:var(--surface2);border-radius:20px;padding:8px 13px;font-size:13px;font-weight:700}
+  .segbtns button.on{background:var(--c,#2fd4a7);color:#04241c;border-color:transparent}
+
+  .banner{background:linear-gradient(100deg,#1c2b18,#152210);border:1px solid #2f4a22;border-radius:12px;padding:12px 13px;font-size:13px;color:#cde6bd;display:flex;gap:9px;align-items:flex-start;margin-bottom:12px}
+  .banner.warn{background:linear-gradient(100deg,#2b2410,#221c0c);border-color:#4a3d1a;color:#f0dca0}
+  .banner b{color:#fff}
+
+  .list-clean{list-style:none;padding:0;margin:0}
+  .res{padding:11px 0;border-bottom:1px solid var(--line)}
+  .res:last-child{border:none}
+  .res .rt{font-weight:650;font-size:14px}
+  .res .rd{font-size:12.5px;color:var(--muted);margin-top:2px}
+
+  .weekrow{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}
+  .grade{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:900;font-family:var(--fmono);font-size:15px}
+  .gA{background:#12351f;color:#5ce08e} .gB{background:#123045;color:#63b7ff}
+  .gC{background:#332912;color:#f5c14e} .gD{background:#3a1717;color:#ff7676}
+
+  .bars{display:flex;align-items:flex-end;gap:7px;height:110px;padding-top:8px}
+  .bars .b{flex:1;background:linear-gradient(var(--mock),#2b6bb0);border-radius:5px 5px 0 0;min-height:4px;position:relative}
+  .bars .b span{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:10px;color:var(--muted);font-family:var(--fmono)}
+  .bars .b em{position:absolute;bottom:-17px;left:0;right:0;text-align:center;font-size:9.5px;color:var(--faint);font-style:normal}
+
+  .seg-list .task{cursor:pointer}
+  .muted{color:var(--muted)} .faint{color:var(--faint)}
+  .fs12{font-size:12px} .fs13{font-size:13px} .mt8{margin-top:8px} .mt12{margin-top:12px} .mb6{margin-bottom:6px}
+  .divider{height:1px;background:var(--line);margin:14px 0}
+  a{color:var(--go)}
+  .toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(20px);background:#0a1220;border:1px solid var(--line2);
+    color:var(--ink);padding:11px 15px;border-radius:12px;font-size:13px;font-weight:600;z-index:60;opacity:0;transition:.25s;max-width:90%;text-align:center;box-shadow:0 10px 30px #0008}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .pill-tabs{display:flex;gap:7px;margin-bottom:13px;overflow-x:auto;padding-bottom:2px}
+  .pill-tabs button{white-space:nowrap;border:1px solid var(--line);background:var(--surface2);border-radius:20px;padding:7px 13px;font-size:12.5px;font-weight:700;color:var(--muted)}
+  .pill-tabs button.on{background:var(--ink);color:#0b111d;border-color:transparent}
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING -->
+<div id="onboard" class="wrap hidden">
+  <div style="text-align:center;margin:22px 0 6px">
+    <div style="font-size:40px">🎯</div>
+    <h1 style="font-size:26px;margin-top:8px">CGL Sprint</h1>
+    <p class="muted fs13" style="margin-top:6px">Tier-1 2026 · sectional-timing ready</p>
+  </div>
+  <div class="card">
+    <label class="fld">Your name</label>
+    <input id="ob_name" placeholder="Vaibhav">
+    <label class="fld">Target exam date <span class="faint">(update when admit card is out)</span></label>
+    <input id="ob_exam" type="date">
+    <label class="fld">Your one-line "why" (shown every day)</label>
+    <input id="ob_why" placeholder="Income Tax Inspector. No excuses.">
+    <div class="divider"></div>
+    <p class="eyebrow mb6">Your honest baseline (out of 25, in a 15-min section)</p>
+    <div class="grid2">
+      <div><label class="fld">Reasoning</label><input id="ob_reasoning" type="number" value="17" min="0" max="25"></div>
+      <div><label class="fld">Quant</label><input id="ob_quant" type="number" value="18" min="0" max="25"></div>
+      <div><label class="fld">English</label><input id="ob_english" type="number" value="18" min="0" max="25"></div>
+      <div><label class="fld">Gen. Awareness</label><input id="ob_ga" type="number" value="9" min="0" max="25"></div>
+    </div>
+    <button class="btn" style="margin-top:16px" onclick="finishOnboard()">Start my sprint →</button>
+  </div>
+  <p class="faint fs12" style="text-align:center">Everything is saved on this device only. Back up from More → Export.</p>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" class="hidden">
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark">CGL<b>·</b>Sprint</div>
+      <div class="countdown" id="topCountdown"></div>
+    </div>
+  </div>
+
+  <!-- TODAY -->
+  <section id="view-today" class="wrap view">
+    <div class="hero">
+      <div class="eyebrow" style="margin-bottom:8px">Tier-1 countdown</div>
+      <div class="big" id="heroDays">— <small>days left</small></div>
+      <div class="sub" id="heroWhy"></div>
+      <div class="streak">🔥 <span id="heroStreak">0</span>-day streak</div>
+    </div>
+
+    <div id="carryBanner"></div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:10px">
+        <div><div class="eyebrow">Today</div><h2 id="todayDate" style="font-size:17px;margin-top:3px"></h2></div>
+        <div style="text-align:right"><div class="stat" style="padding:8px 12px"><div class="n" id="todayPct" style="font-size:20px">0%</div><div class="l">done</div></div></div>
+      </div>
+      <div class="progressline mb6"><i id="todayBar" style="width:0%"></i></div>
+      <div id="todayTasks" class="mt12"></div>
+    </div>
+
+    <div class="grid2">
+      <button class="btn urgent small" style="width:100%" onclick="go('drill')">⏱ 15-min drill</button>
+      <button class="btn ghost small" style="width:100%" onclick="carryOver(true)">↻ Carry over pending</button>
+    </div>
+  </section>
+
+  <!-- PLAN -->
+  <section id="view-plan" class="wrap view hidden">
+    <h2 style="font-size:20px;margin-bottom:4px">This week</h2>
+    <p class="muted fs13" id="weekRange" style="margin-bottom:12px"></p>
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div class="eyebrow">Week completion</div>
+        <div class="fs13" id="weekPctTxt" style="font-weight:800"></div>
+      </div>
+      <div class="progressline mt8"><i id="weekBar" style="width:0%"></i></div>
+      <div class="grid2 mt12" id="weekSecStats"></div>
+    </div>
+    <div id="weekDays"></div>
+    <div class="card">
+      <div class="eyebrow mb6">Strategy lock-in</div>
+      <p class="fs13 muted" style="margin:0">Each section is a separate 15-min box you can't return to. So:
+      <b style="color:var(--quant)">Quant</b> &amp; <b style="color:var(--reasoning)">Reasoning</b> = win on <b>speed</b> (you already have the accuracy).
+      <b style="color:var(--english)">English</b> = win on <b>accuracy</b> (you already have the speed).
+      <b style="color:var(--ga)">GA</b> = win on <b>knowledge</b> — it's fast to answer, so every fact you learn is a near-guaranteed mark.</p>
+    </div>
+  </section>
+
+  <!-- DRILL -->
+  <section id="view-drill" class="wrap view hidden">
+    <h2 style="font-size:20px;margin-bottom:3px">Sectional drill</h2>
+    <p class="muted fs13" style="margin-bottom:12px">Exam-real: 15 minutes, one section, no going back.</p>
+    <div class="segbtns" id="drillSeg"></div>
+    <div class="ring-wrap">
+      <div class="ring">
+        <svg width="230" height="230" viewBox="0 0 230 230">
+          <circle cx="115" cy="115" r="104" fill="none" stroke="#1c2740" stroke-width="14"/>
+          <circle id="ringArc" cx="115" cy="115" r="104" fill="none" stroke="var(--drillc,#f5a524)" stroke-width="14"
+            stroke-linecap="round" stroke-dasharray="653.45" stroke-dashoffset="0"/>
+        </svg>
+        <div class="time"><div class="t" id="ringT">15:00</div><div class="lab" id="ringLab">ready</div></div>
+      </div>
+    </div>
+    <div class="grid2" style="margin-bottom:12px">
+      <button class="btn" id="drillStart" onclick="toggleDrill()">Start 15:00</button>
+      <button class="btn ghost" onclick="resetDrill()">Reset</button>
+    </div>
+    <div class="card" id="drillLogBox">
+      <div class="eyebrow mb6">Log this drill</div>
+      <div class="grid2">
+        <div><label class="fld">Attempted</label><input id="dAtt" type="number" min="0" max="25" placeholder="e.g. 23"></div>
+        <div><label class="fld">Correct</label><input id="dCor" type="number" min="0" max="25" placeholder="e.g. 21"></div>
+      </div>
+      <button class="btn small mt12" style="width:100%" onclick="saveDrill()">Save drill result</button>
+    </div>
+    <div class="card">
+      <div class="eyebrow mb6">Recent drills</div>
+      <div id="drillHistory" class="fs13"></div>
+    </div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section id="view-progress" class="wrap view hidden">
+    <h2 style="font-size:20px;margin-bottom:12px">Progress</h2>
+    <div class="grid2" style="margin-bottom:13px">
+      <div class="stat"><div class="n" id="pStreak">0</div><div class="l">🔥 day streak</div></div>
+      <div class="stat"><div class="n" id="pHours">0</div><div class="l">hrs planned done</div></div>
+      <div class="stat"><div class="n" id="pMocks">0</div><div class="l">mocks taken</div></div>
+      <div class="stat"><div class="n" id="pAvg">—</div><div class="l">avg mock /200</div></div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow mb6">Mock score trend (/200)</div>
+      <div id="mockChart"></div>
+      <button class="btn ghost small mt12" style="width:100%" onclick="openMockForm()">+ Log a mock</button>
+      <div id="mockForm" class="hidden mt12">
+        <div class="grid2">
+          <div><label class="fld">Reasoning /50</label><input id="mR" type="number" min="0" max="50"></div>
+          <div><label class="fld">GA /50</label><input id="mG" type="number" min="0" max="50"></div>
+          <div><label class="fld">Quant /50</label><input id="mQ" type="number" min="0" max="50"></div>
+          <div><label class="fld">English /50</label><input id="mE" type="number" min="0" max="50"></div>
+        </div>
+        <button class="btn small mt12" style="width:100%" onclick="saveMock()">Save mock</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow mb6">Week-by-week verdict</div>
+      <div id="weeklyReview"></div>
+    </div>
+  </section>
+
+  <!-- MORE -->
+  <section id="view-more" class="wrap view hidden">
+    <h2 style="font-size:20px;margin-bottom:12px">More</h2>
+
+    <div class="pill-tabs">
+      <button class="on" onclick="moreTab('res',event)">Resources</button>
+      <button onclick="moreTab('ga',event)">GA tracker</button>
+      <button onclick="moreTab('alerts',event)">Alerts</button>
+      <button onclick="moreTab('settings',event)">Settings</button>
+    </div>
+
+    <div id="more-res">
+      <div class="card">
+        <div class="eyebrow mb6">Best resources · handpicked</div>
+        <ul class="list-clean" id="resList"></ul>
+      </div>
+      <div class="banner warn">ℹ️ <div>SSC CGL needs <b>no resume</b> — it's a written exam then document verification. (Assuming you meant <b>resources</b>.) The picks above are the standard toppers' stack, including the ones you already use.</div></div>
+    </div>
+
+    <div id="more-ga" class="hidden">
+      <div class="card">
+        <div class="eyebrow mb6">GA is your #1 lever</div>
+        <p class="fs13 muted" style="margin-top:0">GA takes ~35 sec/question and needs zero calculation, so 15 minutes is plenty of time — the only bottleneck is <b>knowing the fact</b>. Every day you clear current affairs + one static block, you're banking near-certain marks.</p>
+        <div class="divider"></div>
+        <div class="eyebrow mb6">Static rotation (this week's theme)</div>
+        <div id="gaTheme" class="fs13"></div>
+        <div class="divider"></div>
+        <div class="eyebrow mb6">Daily GA checklist</div>
+        <div id="gaDaily"></div>
+      </div>
+    </div>
+
+    <div id="more-alerts" class="hidden">
+      <div class="card">
+        <div class="eyebrow mb6">Study reminders</div>
+        <p class="fs13 muted" style="margin-top:0">Set your 3 daily nudges. In-app alerts fire while the app is open; for rock-solid alerts even when it's closed, tap "Add to Google Calendar" — you'll get native phone notifications.</p>
+        <div class="grid2">
+          <div><label class="fld">Morning drill</label><input id="rem1" type="time" value="06:00"></div>
+          <div><label class="fld">Midday GA</label><input id="rem2" type="time" value="13:30"></div>
+          <div><label class="fld">Evening block</label><input id="rem3" type="time" value="21:00"></div>
+        </div>
+        <button class="btn small mt12" style="width:100%" onclick="saveReminders()">Save & enable in-app alerts</button>
+        <div class="divider"></div>
+        <div class="eyebrow mb6">Native phone alerts (recommended)</div>
+        <div id="calLinks"></div>
+      </div>
+    </div>
+
+    <div id="more-settings" class="hidden">
+      <div class="card">
+        <label class="fld">Exam date</label><input id="setExam" type="date">
+        <label class="fld">Your "why"</label><input id="setWhy">
+        <button class="btn small mt12" style="width:100%" onclick="saveSettings()">Save</button>
+      </div>
+      <div class="card">
+        <div class="eyebrow mb6">Backup — do this weekly</div>
+        <p class="fs13 muted" style="margin-top:0">Your data lives only on this phone. Export a backup file; import it if you switch phones or clear browser data.</p>
+        <div class="grid2">
+          <button class="btn ghost small" style="width:100%" onclick="exportData()">↓ Export backup</button>
+          <button class="btn ghost small" style="width:100%" onclick="document.getElementById('impFile').click()">↑ Import</button>
+        </div>
+        <input id="impFile" type="file" accept="application/json" class="hidden" onchange="importData(event)">
+      </div>
+      <div class="card">
+        <button class="btn danger small" style="width:100%" onclick="hardReset()">Reset everything</button>
+      </div>
+      <p class="faint fs12" style="text-align:center">Built for Vaibhav's July sprint · v1</p>
+    </div>
+  </section>
+
+  <nav class="tabbar">
+    <button data-t="today" class="on" onclick="go('today')"><span class="ic">◎</span>Today</button>
+    <button data-t="plan" onclick="go('plan')"><span class="ic">▤</span>Plan</button>
+    <button data-t="drill" onclick="go('drill')"><span class="ic">⏱</span>Drill</button>
+    <button data-t="progress" onclick="go('progress')"><span class="ic">◔</span>Progress</button>
+    <button data-t="more" onclick="go('more')"><span class="ic">⋯</span>More</button>
+  </nav>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ============================================================
+   CGL Sprint — SSC CGL Tier-1 2026 (sectional timing) study app
+   Single file. Data in localStorage. Works offline.
+   ============================================================ */
+const KEY='cglSprintState_v1';
+const SECTIONS={
+  reasoning:{name:'Reasoning',lever:'speed'},
+  quant:{name:'Quant',lever:'speed'},
+  english:{name:'English',lever:'accuracy'},
+  ga:{name:'Gen. Awareness',lever:'knowledge'}
+};
+let S=null;
+
+/* ---------- date helpers ---------- */
+const iso=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+const today=()=>iso(new Date());
+function parse(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}
+function addDays(s,n){const d=parse(s);d.setDate(d.getDate()+n);return iso(d)}
+function dow(s){return parse(s).getDay()} // 0 Sun .. 6 Sat
+function isWeekend(s){const d=dow(s);return d===0||d===6}
+function daysBetween(a,b){return Math.round((parse(b)-parse(a))/86400000)}
+// Monday-start week
+function weekStart(s){const d=dow(s);const back=(d===0?6:d-1);return addDays(s,-back)}
+function weekEnd(s){return addDays(weekStart(s),6)}
+function fmtDate(s){return parse(s).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}
+function fmtLong(s){return parse(s).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}
+
+/* ---------- state ---------- */
+function load(){try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}}
+function save(){localStorage.setItem(KEY,JSON.stringify(S))}
+
+function finishOnboard(){
+  const exam=document.getElementById('ob_exam').value||addDays(today(),30);
+  S={
+    settings:{
+      name:document.getElementById('ob_name').value||'You',
+      examDate:exam, startDate:today(),
+      why:document.getElementById('ob_why').value||'Crack CGL 2026. No excuses.',
+      rem:['06:00','13:30','21:00']
+    },
+    baseline:{
+      reasoning:+document.getElementById('ob_reasoning').value||17,
+      quant:+document.getElementById('ob_quant').value||18,
+      english:+document.getElementById('ob_english').value||18,
+      ga:+document.getElementById('ob_ga').value||9
+    },
+    tasks:{}, mocks:[], drills:[],
+    meta:{lastCarry:today(), doneDays:{}}
+  };
+  save(); document.getElementById('onboard').classList.add('hidden');
+  boot();
+}
+
+/* ---------- task templates ---------- */
+// weekly static-GK theme by week index from start
+function gaTheme(dateISO){
+  const wk=Math.floor(daysBetween(weekStart(S.settings.startDate),weekStart(dateISO))/7);
+  const themes=[
+    'Polity + Static GK (Constitution, Fundamental Rights, articles, books & authors, awards)',
+    'History (Ancient→Modern high-yield) + Geography (rivers, mountains, national parks)',
+    'Economy (budget, banking, indices) + General Science (Physics/Chem/Bio basics)',
+    'Full revision + Current Affairs consolidation (last 4–6 months)'
+  ];
+  return themes[wk%themes.length];
+}
+let _tid=0; const tid=()=>'t'+(Date.now().toString(36))+(_tid++);
+function tk(section,title,mins){return{id:tid(),section,title,mins,done:false,carried:false}}
+
+function generatePlan(dateISO){
+  const wknd=isWeekend(dateISO);
+  const di=daysBetween(S.settings.startDate,dateISO);
+  const list=[];
+  if(!wknd){
+    // rotate morning speed drill between quant & reasoning
+    const speedA = (di%2===0)?'quant':'reasoning';
+    const speedB = (di%2===0)?'reasoning':'quant';
+    list.push(tk(speedA,`Morning 15-min timed drill (25 Q) + review every error`,45));
+    list.push(tk('english',`Vocab: 10 new words + revise yesterday's 10`,15));
+    list.push(tk('ga',`Current affairs: read last 24–48h (monthly compilation)`,20));
+    list.push(tk('english',`1 set: error-spotting / cloze / sentence improvement`,20));
+    list.push(tk(speedB,`Weak-topic practice (untimed, understand the trick)`,30));
+    list.push(tk('ga',`Static GK topic from this week's theme`,25));
+    list.push(tk('revision',`Revise: today's formulas / rules / current affairs`,15));
+  } else if(dow(dateISO)===6){ // Saturday
+    list.push(tk('mock',`FULL MOCK — Tier-1, sectional 15-min mode ON`,60));
+    list.push(tk('mock',`Deep analysis: log every mistake + its topic`,60));
+    list.push(tk('ga',`Static GK deep-dive: ${'this week theme'}`,60));
+    list.push(tk('quant',`Backlog + weak-topic marathon`,45));
+    list.push(tk('english',`2 reading comprehensions + revise grammar rules`,40));
+    list.push(tk('review',`Weekly review — grade the week, set next focus`,20));
+  } else { // Sunday
+    list.push(tk('quant',`Sectional mock: Quant (15-min timed)`,20));
+    list.push(tk('reasoning',`Sectional mock: Reasoning (15-min timed)`,20));
+    list.push(tk('ga',`Current affairs weekly consolidation + revise`,45));
+    list.push(tk('reasoning',`Puzzle / seating-arrangement deep practice`,40));
+    list.push(tk('english',`Revise week's vocab + 1 RC`,30));
+    list.push(tk('ga',`Static GK: revise theme + 1 Lucent chapter`,45));
+    list.push(tk('revision',`Full-week revision: formulas, CA, vocab`,30));
+  }
+  return list;
+}
+function ensureDay(dateISO){
+  if(!S.tasks[dateISO]) S.tasks[dateISO]=generatePlan(dateISO);
+  return S.tasks[dateISO];
+}
+
+/* ---------- carry-over ---------- */
+function carryOver(manual){
+  const t=today();
+  const pending=[];
+  Object.keys(S.tasks).forEach(d=>{
+    if(d<t){
+      S.tasks[d]=S.tasks[d].filter(task=>{
+        if(!task.done && task.section!=='mock' && task.section!=='review'){
+          pending.push(task); return false; // remove from old day
+        }
+        return true;
+      });
+    }
+  });
+  if(pending.length===0){ if(manual) toast('Nothing pending — you\'re on track ✦'); render(); return; }
+  // distribute across remaining days of THIS week (today..Sunday)
+  const end=weekEnd(t);
+  let targets=[];
+  for(let d=t; d<=end; d=addDays(d,1)) targets.push(d);
+  if(targets.length===0) targets=[t];
+  pending.forEach((task,i)=>{
+    const day=targets[i%targets.length];
+    ensureDay(day);
+    task.carried=true; task.done=false;
+    S.tasks[day].push(task);
+  });
+  S.meta.lastCarry=t; save();
+  toast(`Moved ${pending.length} pending task${pending.length>1?'s':''} across this week ↻`);
+  render();
+}
+function autoCarry(){ if(S.meta.lastCarry!==today()){ carryOver(false); } }
+
+/* ---------- streak & hours ---------- */
+function markDayDone(dateISO){
+  const arr=S.tasks[dateISO]||[]; if(!arr.length) return;
+  const allDone=arr.every(t=>t.done);
+  S.meta.doneDays[dateISO]=allDone? true : (arr.some(t=>t.done)? 'partial':false);
+}
+function streak(){
+  let n=0, d=today();
+  // count today if any done, else start from yesterday
+  if(!(S.meta.doneDays[d])) d=addDays(d,-1);
+  while(S.meta.doneDays[d]){ n++; d=addDays(d,-1); }
+  return n;
+}
+function hoursDone(){
+  let m=0;
+  Object.values(S.tasks).forEach(arr=>arr.forEach(t=>{if(t.done)m+=t.mins}));
+  return (m/60);
+}
+
+/* ---------- rendering ---------- */
+let cur='today';
+function go(v){
+  cur=v;
+  document.querySelectorAll('.view').forEach(el=>el.classList.add('hidden'));
+  document.getElementById('view-'+v).classList.remove('hidden');
+  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.t===v));
+  window.scrollTo(0,0);
+  render();
+}
+function render(){
+  updateCountdown();
+  if(cur==='today') renderToday();
+  if(cur==='plan') renderPlan();
+  if(cur==='drill') renderDrill();
+  if(cur==='progress') renderProgress();
+  if(cur==='more') renderMore();
+}
+
+function secBadge(sec){
+  const nm = sec==='mock'?'Mock': sec==='review'?'Review': sec==='revision'?'Revision': SECTIONS[sec].name;
+  return `<span class="chip sec">${nm}</span>`;
+}
+function taskHTML(dateISO,t){
+  return `<div class="task ${t.done?'done':''} sec-${t.section}" onclick="toggleTask('${dateISO}','${t.id}')">
+    <div class="sbar"></div>
+    <div class="check"></div>
+    <div class="body">
+      <div class="ttl">${t.title.replace('this week theme',gaTheme(dateISO))}</div>
+      <div class="meta">${secBadge(t.section)}<span class="mins">${t.mins}m</span>${t.carried?'<span class="carried">carried</span>':''}</div>
+    </div>
+  </div>`;
+}
+function toggleTask(dateISO,id){
+  const t=(S.tasks[dateISO]||[]).find(x=>x.id===id); if(!t)return;
+  t.done=!t.done; markDayDone(dateISO); save();
+  if(navigator.vibrate) navigator.vibrate(t.done?12:0);
+  render();
+}
+
+function updateCountdown(){
+  const left=daysBetween(today(),S.settings.examDate);
+  document.getElementById('topCountdown').innerHTML=`T–<b>${Math.max(left,0)}</b> days`;
+}
+function renderToday(){
+  const t=today();
+  const arr=ensureDay(t);
+  markDayDone(t); save();
+  const left=daysBetween(t,S.settings.examDate);
+  document.getElementById('heroDays').innerHTML=`${Math.max(left,0)} <small>days left</small>`;
+  document.getElementById('heroWhy').textContent=S.settings.why;
+  document.getElementById('heroStreak').textContent=streak();
+  document.getElementById('todayDate').textContent=fmtLong(t);
+  const done=arr.filter(x=>x.done).length, pct=arr.length?Math.round(done/arr.length*100):0;
+  document.getElementById('todayPct').textContent=pct+'%';
+  document.getElementById('todayBar').style.width=pct+'%';
+  document.getElementById('todayTasks').innerHTML=arr.map(x=>taskHTML(t,x)).join('');
+  // carry banner
+  let pend=0; Object.keys(S.tasks).forEach(d=>{if(d<t)pend+=S.tasks[d].filter(x=>!x.done&&x.section!=='mock'&&x.section!=='review').length});
+  const cb=document.getElementById('carryBanner');
+  cb.innerHTML = pend>0
+    ? `<div class="banner warn">↻ <div><b>${pend} task${pend>1?'s':''}</b> from earlier days are pending. Tap <b>Carry over</b> to spread them across this week.</div></div>`
+    : (pct===100?`<div class="banner">✦ <div>Full clear today. This is exactly how the streak is built.</div></div>`:'');
+}
+
+function renderPlan(){
+  const t=today(), ws=weekStart(t), we=weekEnd(t);
+  document.getElementById('weekRange').textContent=`${fmtDate(ws)} – ${fmtDate(we)}`;
+  let all=[],done=0;
+  const sec={reasoning:[0,0],quant:[0,0],english:[0,0],ga:[0,0]};
+  const dayhtml=[];
+  for(let d=ws; d<=we; d=addDays(d,1)){
+    const arr=ensureDay(d);
+    const dd=arr.filter(x=>x.done).length;
+    all=all.concat(arr); done+=dd;
+    arr.forEach(x=>{if(sec[x.section]){sec[x.section][1]++; if(x.done)sec[x.section][0]++;}});
+    const isTd=d===t;
+    dayhtml.push(`<div class="card" style="${isTd?'border-color:var(--go)':''}">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <div style="font-weight:750;font-size:14px">${fmtDate(d)} ${isTd?'<span class="chip sec" style="background:#12351f;color:var(--go)">today</span>':''}</div>
+        <div class="mins" style="color:var(--faint);font-family:var(--fmono);font-size:12px">${dd}/${arr.length}</div>
+      </div>
+      <div class="seg-list">${arr.map(x=>taskHTML(d,x)).join('')}</div>
+    </div>`);
+  }
+  const pct=all.length?Math.round(done/all.length*100):0;
+  document.getElementById('weekPctTxt').textContent=pct+'%';
+  document.getElementById('weekBar').style.width=pct+'%';
+  document.getElementById('weekSecStats').innerHTML=Object.keys(sec).map(k=>{
+    const[a,b]=sec[k]; const p=b?Math.round(a/b*100):0;
+    return `<div class="stat sec-${k}"><div class="n" style="font-size:18px;color:var(--c)">${p}%</div><div class="l">${SECTIONS[k].name} · ${SECTIONS[k].lever}</div></div>`;
+  }).join('');
+  document.getElementById('weekDays').innerHTML=dayhtml.join('');
+}
+
+/* ---------- drill timer ---------- */
+let drillSec='quant', drillTime=15*60, drillTimer=null, drillRunning=false;
+const CIRC=2*Math.PI*104;
+function renderDrill(){
+  document.getElementById('drillSeg').innerHTML=Object.keys(SECTIONS).map(k=>
+    `<button class="sec-${k} ${k===drillSec?'on':''}" onclick="pickDrill('${k}')">${SECTIONS[k].name}</button>`).join('');
+  const c=getComputedStyle(document.body).getPropertyValue('--'+drillSec);
+  document.documentElement.style.setProperty('--drillc',c.trim());
+  paintRing();
+  // history
+  const h=S.drills.slice(-6).reverse();
+  document.getElementById('drillHistory').innerHTML = h.length? h.map(d=>{
+    const acc=d.attempted?Math.round(d.correct/d.attempted*100):0;
+    return `<div class="row" style="justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)">
+      <span>${secBadge(d.section)} <span class="muted">${fmtDate(d.date)}</span></span>
+      <span class="mono" style="font-family:var(--fmono)">${d.correct}/${d.attempted} · ${acc}%</span></div>`;
+  }).join('') : '<span class="muted fs13">No drills yet. Start one above.</span>';
+}
+function pickDrill(k){ if(drillRunning)return; drillSec=k; renderDrill(); }
+function paintRing(){
+  const m=Math.floor(drillTime/60), s=drillTime%60;
+  document.getElementById('ringT').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const frac=drillTime/(15*60);
+  document.getElementById('ringArc').style.strokeDashoffset=CIRC*(1-frac);
+  const arc=document.getElementById('ringArc');
+  arc.style.stroke = drillTime<=60 ? 'var(--danger)' : 'var(--drillc)';
+}
+function toggleDrill(){
+  if(drillRunning){ clearInterval(drillTimer); drillRunning=false; document.getElementById('drillStart').textContent='Resume'; document.getElementById('ringLab').textContent='paused'; return;}
+  drillRunning=true; document.getElementById('drillStart').textContent='Pause'; document.getElementById('ringLab').textContent='solving';
+  drillTimer=setInterval(()=>{
+    drillTime--; paintRing();
+    if(drillTime<=0){ clearInterval(drillTimer); drillRunning=false; document.getElementById('ringLab').textContent="time's up";
+      document.getElementById('drillStart').textContent='Start 15:00';
+      if(navigator.vibrate)navigator.vibrate([120,60,120]); notify('⏱ Section over','Log your attempts — that data is gold.'); }
+  },1000);
+}
+function resetDrill(){ clearInterval(drillTimer); drillRunning=false; drillTime=15*60; document.getElementById('drillStart').textContent='Start 15:00'; document.getElementById('ringLab').textContent='ready'; paintRing(); }
+function saveDrill(){
+  const a=+document.getElementById('dAtt').value||0, c=+document.getElementById('dCor').value||0;
+  if(a===0){ toast('Enter how many you attempted'); return; }
+  S.drills.push({date:today(),section:drillSec,attempted:a,correct:Math.min(c,a),seconds:15*60-drillTime}); save();
+  document.getElementById('dAtt').value=''; document.getElementById('dCor').value='';
+  toast('Drill logged ✦'); renderDrill();
+}
+
+/* ---------- progress ---------- */
+function renderProgress(){
+  document.getElementById('pStreak').textContent=streak();
+  document.getElementById('pHours').textContent=hoursDone().toFixed(1);
+  document.getElementById('pMocks').textContent=S.mocks.length;
+  const avg=S.mocks.length? Math.round(S.mocks.reduce((x,m)=>x+m.total,0)/S.mocks.length):'—';
+  document.getElementById('pAvg').textContent=avg;
+  // chart
+  const mc=document.getElementById('mockChart');
+  if(!S.mocks.length){ mc.innerHTML='<p class="muted fs13">No mocks logged yet. Weekend mocks are where marks are made.</p>'; }
+  else{
+    const last=S.mocks.slice(-7); const max=Math.max(200,...last.map(m=>m.total));
+    mc.innerHTML=`<div class="bars">${last.map(m=>{
+      const h=Math.round(m.total/max*100);
+      return `<div class="b" style="height:${h}%"><span>${m.total}</span><em>${parse(m.date).getDate()}/${parse(m.date).getMonth()+1}</em></div>`;
+    }).join('')}</div>`;
+  }
+  renderWeekly();
+}
+function openMockForm(){ document.getElementById('mockForm').classList.toggle('hidden'); }
+function saveMock(){
+  const r=+document.getElementById('mR').value||0,g=+document.getElementById('mG').value||0,q=+document.getElementById('mQ').value||0,e=+document.getElementById('mE').value||0;
+  const total=r+g+q+e;
+  S.mocks.push({date:today(),reasoning:r,ga:g,quant:q,english:e,total}); save();
+  ['mR','mG','mQ','mE'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mockForm').classList.add('hidden');
+  toast(`Mock saved: ${total}/200`); renderProgress();
+}
+function renderWeekly(){
+  const t=today(); const startW=weekStart(S.settings.startDate);
+  const wr=document.getElementById('weeklyReview'); let html='';
+  // iterate each week from start up to current week
+  let w=startW, idx=1, any=false;
+  while(w<=weekStart(t)){
+    const we=addDays(w,6);
+    let total=0,done=0; const sec={reasoning:[0,0],quant:[0,0],english:[0,0],ga:[0,0]};
+    for(let d=w; d<=we; d=addDays(d,1)){
+      const arr=S.tasks[d]; if(!arr)continue;
+      arr.forEach(x=>{ total++; if(x.done)done++; if(sec[x.section]){sec[x.section][1]++; if(x.done)sec[x.section][0]++;} });
+    }
+    if(total>0){
+      any=true;
+      const pct=Math.round(done/total*100);
+      let g='D',gc='gD',verdict='Reset week — pick 3 non-negotiables and protect them.';
+      if(pct>=85){g='A';gc='gA';verdict='On track. Keep the speed drills daily.';}
+      else if(pct>=70){g='B';gc='gB';verdict='Solid. Tighten the carried-over tasks.';}
+      else if(pct>=55){g='C';gc='gC';verdict='Slipping. Protect the morning drill first.';}
+      // weakest section that week
+      let weak=null,weakp=999;
+      Object.keys(sec).forEach(k=>{const[a,b]=sec[k]; if(b){const p=a/b*100; if(p<weakp){weakp=p;weak=k;}}});
+      const mocksW=S.mocks.filter(m=>m.date>=w&&m.date<=we);
+      const mtxt=mocksW.length?`Mocks: ${mocksW.map(m=>m.total).join(', ')}/200`:'No mock this week';
+      const cur = w<=t && t<=we;
+      html+=`<div class="weekrow">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:14px">Week ${idx} ${cur?'<span class="chip sec" style="background:#12351f;color:var(--go)">current</span>':''}</div>
+          <div class="muted fs12" style="margin-top:2px">${fmtDate(w)}–${fmtDate(we)} · ${pct}% done · ${mtxt}</div>
+          <div class="fs12" style="margin-top:4px">${verdict} ${weak?`<b style="color:var(--${weak})">Focus ${SECTIONS[weak].name} next.</b>`:''}</div>
+        </div>
+        <div class="grade ${gc}">${g}</div>
+      </div>`;
+    }
+    w=addDays(w,7); idx++;
+  }
+  wr.innerHTML= any? html : '<p class="muted fs13">Your first weekly verdict appears after a few days of ticking tasks.</p>';
+}
+
+/* ---------- more ---------- */
+const RESOURCES=[
+  ['Quant · Speed','Rakesh Yadav 7300+ (base) → then Gagan Pratap sheets & speed batches for shortcuts. Master tables to 30, squares to 40, cubes to 20.'],
+  ['Quant · PYQ','Kiran / Disha SSC previous-year chapterwise — do 5–10 years topic by topic.'],
+  ['Reasoning','Previous-year sets for pattern; puzzles/seating for accuracy. Once fast, it\'s your highest-scoring section.'],
+  ['English · Accuracy','Neetu Singh Vol 1 & 2 (grammar rules) + SP Bakshi. Daily error-spotting & sentence-improvement drills.'],
+  ['English · Vocab','Word Power Made Easy + one root/day. Log new words in the app\'s vocab task.'],
+  ['GA · Static','Lucent\'s GK (the bible) + Parmar Sir GS notes. Read like a story, revise on rotation.'],
+  ['GA · Current Affairs','One monthly compilation (Adda/Oliveboard) + daily 10-min read. GA is your biggest lever.'],
+  ['Mocks (critical)','Testbook / Adda247 / PracticeMock / Oliveboard — pick ONE test series that supports 2026 sectional-timing mode. Analysis > attempts.'],
+  ['Official','ssc.gov.in — syllabus PDF, notification, and admit card. Update your exam date here when it drops.']
+];
+function renderMore(){
+  document.getElementById('resList').innerHTML=RESOURCES.map(r=>`<li class="res"><div class="rt">${r[0]}</div><div class="rd">${r[1]}</div></li>`).join('');
+  document.getElementById('gaTheme').innerHTML=`<b style="color:var(--ga)">${gaTheme(today())}</b>`;
+  const gaTasks=['Read today\'s current affairs (last 24–48h)','One static topic from this week\'s theme','Revise yesterday\'s GA in 5 min','Note 5 facts you didn\'t know'];
+  document.getElementById('gaDaily').innerHTML=gaTasks.map(x=>`<div class="task"><div class="sbar" style="background:var(--ga)"></div><div class="check"></div><div class="body"><div class="ttl">${x}</div></div></div>`).join('');
+  document.getElementById('setExam').value=S.settings.examDate;
+  document.getElementById('setWhy').value=S.settings.why;
+  document.getElementById('rem1').value=S.settings.rem[0];
+  document.getElementById('rem2').value=S.settings.rem[1];
+  document.getElementById('rem3').value=S.settings.rem[2];
+  renderCalLinks();
+}
+function moreTab(t,ev){
+  document.querySelectorAll('#view-more .pill-tabs button').forEach(b=>b.classList.remove('on'));
+  ev.target.classList.add('on');
+  ['res','ga','alerts','settings'].forEach(x=>document.getElementById('more-'+x).classList.toggle('hidden',x!==t));
+}
+function saveSettings(){ S.settings.examDate=document.getElementById('setExam').value; S.settings.why=document.getElementById('setWhy').value; save(); toast('Saved'); render(); }
+function saveReminders(){
+  S.settings.rem=[document.getElementById('rem1').value,document.getElementById('rem2').value,document.getElementById('rem3').value];
+  save();
+  if('Notification' in window && Notification.permission!=='granted'){ Notification.requestPermission().then(scheduleReminders); }
+  else scheduleReminders();
+  toast('Reminders set'); renderCalLinks();
+}
+// Google Calendar recurring-event links (native phone alerts even when app closed)
+function calLink(title,time){
+  const [h,m]=time.split(':'); const t=today().replace(/-/g,'');
+  const start=`${t}T${h}${m}00`; const endH=String((+h+0)).padStart(2,'0');
+  const end=`${t}T${h}${String(+m+30).padStart(2,'0')}00`;
+  const until=S.settings.examDate.replace(/-/g,'')+'T235900Z';
+  const url='https://calendar.google.com/calendar/render?action=TEMPLATE'
+    +'&text='+encodeURIComponent('CGL Sprint: '+title)
+    +'&dates='+start+'/'+end
+    +'&recur='+encodeURIComponent('RRULE:FREQ=DAILY;UNTIL='+until)
+    +'&details='+encodeURIComponent('Open CGL Sprint and clear this block.');
+  return url;
+}
+function renderCalLinks(){
+  const items=[['Morning drill',S.settings.rem[0]],['Midday GA',S.settings.rem[1]],['Evening block',S.settings.rem[2]]];
+  document.getElementById('calLinks').innerHTML=items.map(i=>
+    `<a href="${calLink(i[0],i[1])}" target="_blank" class="btn ghost small" style="display:block;text-align:center;margin-bottom:8px;text-decoration:none">📅 Add "${i[0]}" (${i[1]}) daily</a>`
+  ).join('');
+}
+
+/* ---------- notifications (foreground) ---------- */
+function notify(title,body){
+  try{ if('Notification' in window && Notification.permission==='granted'){ new Notification(title,{body}); } }catch(e){}
+}
+let remTimers=[];
+function scheduleReminders(){
+  remTimers.forEach(clearTimeout); remTimers=[];
+  const labels=['Morning drill — 15 min, no going back ⏱','Midday GA — bank some easy marks','Evening block — analysis > attempts'];
+  S.settings.rem.forEach((tm,i)=>{
+    const [h,m]=tm.split(':').map(Number);
+    const now=new Date(); const fire=new Date(); fire.setHours(h,m,0,0);
+    if(fire<=now) fire.setDate(fire.getDate()+1);
+    const ms=fire-now;
+    if(ms<86400000) remTimers.push(setTimeout(()=>{ notify('CGL Sprint',labels[i]); scheduleReminders(); }, ms));
+  });
+}
+
+/* ---------- backup ---------- */
+function exportData(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='cgl-sprint-backup-'+today()+'.json'; a.click(); toast('Backup downloaded');
+}
+function importData(ev){
+  const f=ev.target.files[0]; if(!f)return; const r=new FileReader();
+  r.onload=()=>{ try{ S=JSON.parse(r.result); save(); toast('Backup restored'); render(); }catch(e){ toast('Invalid backup file'); } };
+  r.readAsText(f);
+}
+function hardReset(){ if(confirm('Erase everything and start over?')){ localStorage.removeItem(KEY); location.reload(); } }
+
+/* ---------- toast ---------- */
+let toastT=null;
+function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),2200); }
+
+/* ---------- boot ---------- */
+function boot(){
+  document.getElementById('app').classList.remove('hidden');
+  // generate the next ~5 weeks of plans so Plan/weekly views have data
+  let d=S.settings.startDate; const end=addDays(today(),35);
+  while(d<=end){ ensureDay(d); d=addDays(d,1); }
+  autoCarry(); save();
+  scheduleReminders();
+  go('today');
+}
+function init(){
+  load();
+  if(!S){ document.getElementById('onboard').classList.remove('hidden'); document.getElementById('ob_exam').value=addDays(today(),30); }
+  else boot();
+}
+init();
+
+// re-check reminders when app regains focus
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden && S){ autoCarry(); scheduleReminders(); render(); } });
+</script>
+</body>
+</html>
